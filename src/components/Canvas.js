@@ -7,13 +7,52 @@ import {
   useRef
 } from "react";
 
+import anime, { set } from "animejs";
+
 const VelocityContext = createContext({});
+const TransformContext = createContext({});
+const CanvasContext = createContext({ canvasNode: null, ctx: null, frame: 0 });
 
 export function Velocity({ d, ...props }) {
   return <VelocityContext.Provider value={d} {...props} />;
 }
+const t = { rotate: 0 };
+const a = [
+  {
+    targets: t,
+    rotate: 360,
+    loop: true,
+    direction: "alternate",
+    //  delay: function(el, i) { return i * 100; },
+    // elasticity: 200,
+    easing: "easeInOutSine"
+  }
+];
+export function Transform({ transforms = a, ...props }) {
+  const { frame } = useContext(CanvasContext);
+  const [state, setState] = useState({});
+  const [animations, setAnimations] = useState([]);
+  useEffect(() => {
+    const animations = transforms.map((transform, idx) => {
+      return anime({
+        autoplay: false,
+        ...transform,
+        update: function (a) {
+          // console.log(a.animatables[idx].target);
+          setState({ ...a.animatables[idx].target });
+        }
+      });
+    });
+    setAnimations(animations);
+  }, [transforms]);
+  useEffect(() => {
+    animations.map((animation) => {
+      animation.seek(animation.duration * (frame / 60));
+    });
+  }, [frame, animations]);
 
-const CanvasContext = createContext({ canvasNode: null, ctx: null, frame: 0 });
+  return <TransformContext.Provider value={state} {...props} />;
+}
 
 export function Canvas({ children, ...props }) {
   const [canvasNode, setCanvasNode] = useState(null);
@@ -44,13 +83,16 @@ export function Canvas({ children, ...props }) {
     <CanvasContext.Provider
       value={{ canvasNode, ctx: canvasNode?.getContext("2d") || null, frame }}
     >
-      <VelocityContext.Provider value={{}}>
-        <canvas ref={canvasRef} {...props} />
-        {!canvasNode ? null : children}
-      </VelocityContext.Provider>
+      <Velocity d={{}}>
+        <Transform transforms={[]}>
+          <canvas ref={canvasRef} {...props} />
+          {!canvasNode ? null : children}
+        </Transform>
+      </Velocity>
     </CanvasContext.Provider>
   );
 }
+
 //Utils:
 export function MotionBlur({ r = 255, g = 255, b = 255, a = 0.3 }) {
   const { ctx } = useContext(CanvasContext);
@@ -85,11 +127,15 @@ export function Square({ x, y, color, width }) {
 
 export function Rect({ x, y, color, width, height }) {
   const { ctx, frame } = useContext(CanvasContext);
+  const { width: canvasWidth, height: canvasHeight } = ctx.canvas;
+  const { translate, scale, rotate = 0 } = useContext(TransformContext);
+  // console.log(rotate)
+  const { x: dx = 0, y: dy = 0 } = useContext(VelocityContext);
   ctx.save();
-  ctx.translate(250, 250);
-  ctx.rotate((Math.PI / 180) * frame);
+  ctx.translate(canvasWidth / 2, canvasHeight / 2);
+  ctx.rotate((Math.PI / 180) * rotate);
   ctx.fillStyle = color;
-  ctx.fillRect(-40, -20, width, height);
+  ctx.fillRect(-(width / 2), -(height / 2), width, height);
   ctx.restore();
   return null;
 }
