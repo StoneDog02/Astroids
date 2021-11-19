@@ -47,7 +47,7 @@ export function Transform({ transforms = a, ...props }) {
   }, [transforms]);
   useEffect(() => {
     animations.map((animation) => {
-      animation.seek(animation.duration * (frame / 60));
+      animation.seek(animation.duration * ((frame % 100) / 100));
     });
   }, [frame, animations]);
 
