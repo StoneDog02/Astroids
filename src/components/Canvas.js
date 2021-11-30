@@ -7,15 +7,43 @@ import {
   useRef
 } from "react";
 
-import anime, { set } from "animejs";
-
+import anime from "animejs";
+const NOOP = () => {};
 const VelocityContext = createContext({});
 const CollisionsContext = createContext([]);
 const TransformContext = createContext({});
 const CanvasContext = createContext({ canvasNode: null, ctx: null, frame: 0 });
 
-export function Velocity({ d, ...props }) {
-  return <VelocityContext.Provider value={d} {...props} />;
+export function detectCollision(bodyOne, bodyTwo) {
+  return (
+    bodyOne.x > bodyTwo.x &&
+    bodyOne.x < bodyTwo.x + bodyTwo.width &&
+    bodyOne.y > bodyTwo.y &&
+    bodyOne.y < bodyTwo.y + bodyTwo.Height
+  );
+}
+
+export function Velocity({ id, d, changeD = NOOP, ...props }) {
+  const bodies = useContext(CollisionsContext);
+  const thisBody = bodies.filter((body) => body.id === id);
+  for (let i = 0; i < bodies.length; i++) {
+    const otherBody = bodies[i];
+    if (otherBody.id === thisBody.id) {
+      continue;
+    }
+    console.log(otherBody, thisBody);
+    if (detectCollision(thisBody, otherBody)) {
+      console.log("collision");
+      Object.keys(thisBody.d).forEach((dKey) => {
+        thisBody.d[dKey] = -thisBody.d[dKey];
+      });
+    }
+  }
+  const newD = thisBody?.d || d;
+  useEffect(() => {
+    changeD(newD);
+  }, [newD]);
+  return <VelocityContext.Provider value={newD} {...props} />;
 }
 
 export function Collisions({ bodies, ...props }) {

@@ -19,6 +19,7 @@ export default function App() {
       x: 0,
       y: 0,
       width: 50,
+      height: 50,
       color: "aqua"
     },
     {
@@ -27,6 +28,7 @@ export default function App() {
       x: 450,
       y: 450,
       width: 50,
+      height: 50,
       color: "rebeccapurple"
     },
     {
@@ -35,6 +37,7 @@ export default function App() {
       x: 0,
       y: 450,
       width: 50,
+      height: 50,
       color: "rebeccapurple"
     },
     {
@@ -43,6 +46,7 @@ export default function App() {
       x: 450,
       y: 0,
       width: 50,
+      height: 50,
       color: "aqua"
     }
   ]);
@@ -52,9 +56,18 @@ export default function App() {
       <Canvas width="500" height="500">
         <MotionBlur a={0.5} />
         {/* <ClearCanvas /> */}
-        <Collisions>
+        <Collisions bodies={astroids}>
           {astroids.map((astroid) => (
-            <Velocity d={astroid.d}>
+            <Velocity
+              key={astroid.id}
+              id={astroid.id}
+              d={astroid.d}
+              changeD={(d) => {
+                console.log("newD", d);
+                astroids[astroid.id].d = d;
+                setAstroids(astroids);
+              }}
+            >
               <Square
                 x={astroid.x}
                 y={astroid.y}
