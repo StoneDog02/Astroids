@@ -6,28 +6,64 @@ import {
   MotionBlur,
   ClearCanvas,
   Velocity,
-  Transform
+  Transform,
+  Collisions
 } from "./components/Canvas";
 import { useCallback, useEffect, useState } from "react";
 const DEBRIS_VELOCITY = 2;
 export default function App() {
+  const [astroids, setAstroids] = useState([
+    {
+      id: 0,
+      d: { x: DEBRIS_VELOCITY, y: DEBRIS_VELOCITY },
+      x: 0,
+      y: 0,
+      width: 50,
+      color: "aqua"
+    },
+    {
+      id: 1,
+      d: { x: -DEBRIS_VELOCITY, y: -DEBRIS_VELOCITY },
+      x: 450,
+      y: 450,
+      width: 50,
+      color: "rebeccapurple"
+    },
+    {
+      id: 2,
+      d: { x: DEBRIS_VELOCITY, y: -DEBRIS_VELOCITY },
+      x: 0,
+      y: 450,
+      width: 50,
+      color: "rebeccapurple"
+    },
+    {
+      id: 3,
+      d: { x: -DEBRIS_VELOCITY, y: DEBRIS_VELOCITY },
+      x: 450,
+      y: 0,
+      width: 50,
+      color: "aqua"
+    }
+  ]);
+
   return (
     <div className="App">
       <Canvas width="500" height="500">
         <MotionBlur a={0.5} />
         {/* <ClearCanvas /> */}
-        <Velocity d={{ x: DEBRIS_VELOCITY, y: DEBRIS_VELOCITY }}>
-          <Square x={0} y={0} width={50} color="aqua" />
-        </Velocity>
-        <Velocity d={{ x: -DEBRIS_VELOCITY, y: -DEBRIS_VELOCITY }}>
-          <Square x={450} y={450} width={50} color="rebeccapurple" />
-        </Velocity>
-        <Velocity d={{ x: DEBRIS_VELOCITY, y: -DEBRIS_VELOCITY }}>
-          <Square x={0} y={450} width={50} color="rebeccapurple" />
-        </Velocity>
-        <Velocity d={{ x: -DEBRIS_VELOCITY, y: DEBRIS_VELOCITY }}>
-          <Square x={450} y={0} width={50} color="aqua" />
-        </Velocity>
+        <Collisions>
+          {astroids.map((astroid) => (
+            <Velocity d={astroid.d}>
+              <Square
+                x={astroid.x}
+                y={astroid.y}
+                width={astroid.width}
+                color={astroid.color}
+              />
+            </Velocity>
+          ))}
+        </Collisions>
         <Transform
           transfroms={[
             {
@@ -48,11 +84,3 @@ export default function App() {
     </div>
   );
 }
-
-const car = {
-  make: "Honda",
-  model: "Civic",
-  year: "2020",
-  kind: "Coupe",
-  range: { highway: 36, city: 5 }
-};

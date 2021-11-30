@@ -10,11 +10,16 @@ import {
 import anime, { set } from "animejs";
 
 const VelocityContext = createContext({});
+const CollisionsContext = createContext([]);
 const TransformContext = createContext({});
 const CanvasContext = createContext({ canvasNode: null, ctx: null, frame: 0 });
 
 export function Velocity({ d, ...props }) {
   return <VelocityContext.Provider value={d} {...props} />;
+}
+
+export function Collisions({ bodies, ...props }) {
+  return <CollisionsContext.Provider value={bodies} {...props} />;
 }
 const t = { rotate: 0 };
 const a = [
@@ -28,6 +33,7 @@ const a = [
     easing: "easeInOutSine"
   }
 ];
+
 export function Transform({ transforms = a, ...props }) {
   const { frame } = useContext(CanvasContext);
   const [state, setState] = useState({});
@@ -83,12 +89,14 @@ export function Canvas({ children, ...props }) {
     <CanvasContext.Provider
       value={{ canvasNode, ctx: canvasNode?.getContext("2d") || null, frame }}
     >
-      <Velocity d={{}}>
-        <Transform transforms={[]}>
-          <canvas ref={canvasRef} {...props} />
-          {!canvasNode ? null : children}
-        </Transform>
-      </Velocity>
+      <Collisions bodies={[]}>
+        <Velocity d={{}}>
+          <Transform transforms={[]}>
+            <canvas ref={canvasRef} {...props} />
+            {!canvasNode ? null : children}
+          </Transform>
+        </Velocity>
+      </Collisions>
     </CanvasContext.Provider>
   );
 }
@@ -122,6 +130,7 @@ export function Square({ x, y, color, width }) {
       y: properties.current.y + dy
     };
   });
+
   return null;
 }
 
