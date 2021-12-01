@@ -9,41 +9,48 @@ import {
 
 import anime from "animejs";
 const NOOP = () => {};
-const VelocityContext = createContext({});
 const CollisionsContext = createContext([]);
 const TransformContext = createContext({});
 const CanvasContext = createContext({ canvasNode: null, ctx: null, frame: 0 });
 
-export function detectCollision(bodyOne, bodyTwo) {
+export function detectCollision(rect1, rect2) {
+  debugger;
   return (
-    bodyOne.x > bodyTwo.x &&
-    bodyOne.x < bodyTwo.x + bodyTwo.width &&
-    bodyOne.y > bodyTwo.y &&
-    bodyOne.y < bodyTwo.y + bodyTwo.Height
+    rect1.x < rect2.x + rect2.width &&
+    rect1.x + rect1.width > rect2.x &&
+    rect1.y < rect2.y + rect2.height &&
+    rect1.height + rect1.y > rect2.y
   );
 }
 
-export function Velocity({ id, d, changeD = NOOP, ...props }) {
+export function Velocity({ body, updateBody = NOOP, children, ...props }) {
+  // const { frame } = useContext(CanvasContext);
   const bodies = useContext(CollisionsContext);
-  const thisBody = bodies.filter((body) => body.id === id);
   for (let i = 0; i < bodies.length; i++) {
     const otherBody = bodies[i];
-    if (otherBody.id === thisBody.id) {
+    if (otherBody.id === body.id) {
       continue;
     }
-    console.log(otherBody, thisBody);
-    if (detectCollision(thisBody, otherBody)) {
+    const hasCollision = detectCollision(body, otherBody);
+    debugger;
+    if (hasCollision) {
       console.log("collision");
-      Object.keys(thisBody.d).forEach((dKey) => {
-        thisBody.d[dKey] = -thisBody.d[dKey];
+      // TODO collect all collided bodies then do math
+      Object.keys(body.d).forEach((dKey) => {
+        body.d[dKey] = -body.d[dKey];
       });
     }
   }
-  const newD = thisBody?.d || d;
   useEffect(() => {
-    changeD(newD);
-  }, [newD]);
-  return <VelocityContext.Provider value={newD} {...props} />;
+    // console.log(body)
+    updateBody({
+      ...body,
+      x: body.x + body.d.x,
+      y: body.y + body.d.y
+      // d: { x: 0, y: 0 }
+    });
+  });
+  return <>{children}</>;
 }
 
 export function Collisions({ bodies, ...props }) {
@@ -118,12 +125,10 @@ export function Canvas({ children, ...props }) {
       value={{ canvasNode, ctx: canvasNode?.getContext("2d") || null, frame }}
     >
       <Collisions bodies={[]}>
-        <Velocity d={{}}>
-          <Transform transforms={[]}>
-            <canvas ref={canvasRef} {...props} />
-            {!canvasNode ? null : children}
-          </Transform>
-        </Velocity>
+        <Transform transforms={[]}>
+          <canvas ref={canvasRef} {...props} />
+          {!canvasNode ? null : children}
+        </Transform>
       </Collisions>
     </CanvasContext.Provider>
   );
@@ -146,18 +151,10 @@ export function ClearCanvas(props) {
 
 //Shapes:
 export function Square({ x, y, color, width }) {
-  const properties = useRef({ x, y, color, width });
+  // console.log(x)
   const { ctx } = useContext(CanvasContext);
-  const { x: dx = 0, y: dy = 0 } = useContext(VelocityContext);
   ctx.fillStyle = color;
-  // console.log("SquareProps", properties.current.x, properties.current.y);
-  ctx.fillRect(properties.current.x, properties.current.y, width, width);
-  useEffect(() => {
-    properties.current = {
-      x: properties.current.x + dx,
-      y: properties.current.y + dy
-    };
-  });
+  ctx.fillRect(x, y, width, width);
 
   return null;
 }
@@ -167,7 +164,6 @@ export function Rect({ x, y, color, width, height }) {
   const { width: canvasWidth, height: canvasHeight } = ctx.canvas;
   const { translate, scale, rotate = 0 } = useContext(TransformContext);
   // console.log(rotate)
-  const { x: dx = 0, y: dy = 0 } = useContext(VelocityContext);
   ctx.save();
   ctx.translate(canvasWidth / 2, canvasHeight / 2);
   ctx.rotate((Math.PI / 180) * rotate);

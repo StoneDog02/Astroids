@@ -10,7 +10,7 @@ import {
   Collisions
 } from "./components/Canvas";
 import { useCallback, useEffect, useState } from "react";
-const DEBRIS_VELOCITY = 2;
+const DEBRIS_VELOCITY = 0.1;
 export default function App() {
   const [astroids, setAstroids] = useState([
     {
@@ -60,12 +60,11 @@ export default function App() {
           {astroids.map((astroid) => (
             <Velocity
               key={astroid.id}
-              id={astroid.id}
-              d={astroid.d}
-              changeD={(d) => {
-                console.log("newD", d);
-                astroids[astroid.id].d = d;
-                setAstroids(astroids);
+              body={astroid}
+              updateBody={(body) => {
+                // console.log("newD", body);
+                astroids[astroid.id] = body;
+                setAstroids([...astroids]);
               }}
             >
               <Square
