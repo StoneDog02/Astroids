@@ -1,18 +1,16 @@
 import "./styles.css";
-import {
-  Canvas,
-  Square,
-  Rect,
-  MotionBlur,
-  ClearCanvas,
-  Velocity,
-  Transform,
-  Collisions
-} from "./components/Canvas";
-import { useCallback, useEffect, useState } from "react";
-const DEBRIS_VELOCITY = 0.1;
-export default function App() {
-  const [astroids, setAstroids] = useState([
+import { Canvas } from "./components/Canvas";
+import { Collisions, detectCollision } from "./components/Collisions";
+import { MotionBlur } from "./components/MotionBlur";
+import { Transform } from "./components/Transform";
+import { Velocity } from "./components/Velocity";
+import { Square } from "./components/Square";
+import { Rect } from "./components/Rect";
+import { useCallback, useEffect, useReducer, useState } from "react";
+const DEBRIS_VELOCITY = 2;
+
+const initialState = {
+  astroids: [
     {
       id: 0,
       d: { x: DEBRIS_VELOCITY, y: DEBRIS_VELOCITY },
@@ -49,23 +47,51 @@ export default function App() {
       height: 50,
       color: "aqua"
     }
-  ]);
+  ]
+};
+const ACTIONS = {
+  UPDATE_ASTROID: "UPDATE_ASTROID"
+};
+function reducer(state, { type, payload }) {
+  switch (type) {
+    case ACTIONS.UPDATE_ASTROID:
+      debugger;
+      return {
+        ...state,
+        astroids: state.astroids.map((astroid) =>
+          astroid.id === payload.id ? payload : astroid
+        )
+      };
+    default:
+      throw new Error(`reducer cannot handle type: ${type}`);
+  }
+}
+
+export default function App() {
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { astroids } = state;
+  const updateAstroid = useCallback((astroid) => {
+    // astroid.id === 0 && console.log(astroid.d)
+    dispatch({ type: ACTIONS.UPDATE_ASTROID, payload: astroid });
+  }, []);
 
   return (
     <div className="App">
       <Canvas width="500" height="500">
         <MotionBlur a={0.5} />
         {/* <ClearCanvas /> */}
-        <Collisions bodies={astroids}>
+        <Collisions
+          bodies={[
+            { x: -10, y: 0, width: 10, height: 500 },
+            { x: 500, y: 0, width: 10, height: 500 },
+            ...astroids
+          ]}
+        >
           {astroids.map((astroid) => (
             <Velocity
               key={astroid.id}
               body={astroid}
-              updateBody={(body) => {
-                // console.log("newD", body);
-                astroids[astroid.id] = body;
-                setAstroids([...astroids]);
-              }}
+              updateBody={updateAstroid}
             >
               <Square
                 x={astroid.x}
